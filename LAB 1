@@ -1,0 +1,22 @@
+from itertools import product
+
+
+EVEN_DIGITS = [0, 2, 4, 6, 8]
+TARGET_SUM = 16
+PIN_LENGTH = 4
+
+
+def generate_pins():
+	"""Return every 4-digit PIN made only of even digits whose digits sum to 16."""
+	valid_pins = []
+	for digits in product(EVEN_DIGITS, repeat=PIN_LENGTH):
+		if sum(digits) == TARGET_SUM:
+			valid_pins.append("".join(str(digit) for digit in digits))
+	return valid_pins
+
+
+if __name__ == "__main__":
+	pins = generate_pins()
+	for pin in pins:
+		print(pin)
+	print(f"Total valid PINs: {len(pins)}")
