@@ -1,0 +1,96 @@
+from collections import deque
+
+
+GRAPH = {
+	"Alice": ["Charlie", "David"],
+	"Bob": ["Emma", "Fred"],
+	"Charlie": ["Alice", "Emma"],
+	"David": ["Alice", "Emma", "Fred"],
+	"Emma": ["Bob", "Charlie", "David"],
+	"Fred": ["Bob", "David"],
+}
+
+
+def reconstruct_path(parents, start, goal):
+	path = [goal]
+	while path[-1] != start:
+		parent = parents.get(path[-1])
+		if parent is None:
+			return []
+		path.append(parent)
+	path.reverse()
+	return path
+
+
+def bfs(graph, start, goal):
+	queue = deque([start])
+	visited = {start}
+	visited_order = [start]
+	parents = {start: None}
+
+	print("BFS traversal")
+	step = 1
+	print(f"Step {step}: Queue = {list(queue)}, Visited = {visited_order}")
+
+	while queue:
+		current = queue.popleft()
+		if current == goal:
+			break
+
+		for neighbor in sorted(graph[current]):
+			if neighbor not in visited:
+				visited.add(neighbor)
+				visited_order.append(neighbor)
+				parents[neighbor] = current
+				queue.append(neighbor)
+
+		step += 1
+		print(f"Step {step}: Queue = {list(queue)}, Visited = {visited_order}")
+
+	path = reconstruct_path(parents, start, goal)
+	print(f"Final Path Found by BFS: {' -> '.join(path) if path else 'No path found'}")
+	print()
+	return path
+
+
+def dfs(graph, start, goal):
+	stack = [start]
+	visited = set()
+	visited_order = []
+	parents = {start: None}
+
+	print("DFS traversal")
+	step = 1
+	print(f"Step {step}: Stack = {stack}, Visited = {visited_order}")
+
+	while stack:
+		current = stack.pop()
+		if current in visited:
+			continue
+
+		visited.add(current)
+		visited_order.append(current)
+		if current == goal:
+			break
+
+		neighbors = sorted(graph[current], reverse=True)
+		for neighbor in neighbors:
+			if neighbor not in visited and neighbor not in stack:
+				if neighbor not in parents:
+					parents[neighbor] = current
+				stack.append(neighbor)
+
+		step += 1
+		print(f"Step {step}: Stack = {stack}, Visited = {visited_order}")
+
+	path = reconstruct_path(parents, start, goal)
+	print(f"Final Path Found by DFS: {' -> '.join(path) if path else 'No path found'}")
+	return path
+
+
+if __name__ == "__main__":
+	start_node = "Alice"
+	goal_node = "Bob"
+
+	bfs(GRAPH, start_node, goal_node)
+	dfs(GRAPH, start_node, goal_node)
