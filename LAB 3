@@ -1,0 +1,74 @@
+import csv
+import os
+import sys
+
+
+def ensure_sample_file(fname: str):
+    if not os.path.exists(fname):
+        sample = [
+            ["LatencySensitivity", "DataVolume", "RAMDemand", "NetworkBandwidth", "GPURequired", "HighPerformanceEdge"],
+            ["High", "Large", "High", "Dedicated", "Yes", "Yes"],
+            ["High", "Small", "High", "Shared", "Yes", "No"],
+            ["High", "Large", "High", "Shared", "Yes", "Yes"],
+            ["Low", "Large", "Medium", "Shared", "No", "No"],
+            ["High", "Large", "High", "Dedicated", "No", "Yes"],
+        ]
+        with open(fname, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerows(sample)
+
+
+def is_positive(label: str) -> bool:
+    return label.strip().lower() in ("yes", "y", "1", "true", "positive")
+
+
+def find_s(csv_path: str):
+    with open(csv_path, newline="") as f:
+        reader = list(csv.reader(f))
+    if not reader:
+        print("CSV is empty")
+        return
+
+    header = reader[0]
+    data = reader[1:]
+    attrs = header[:-1]
+
+    MSPEC = "∅"
+    ANY = "?"
+
+    h = [MSPEC] * len(attrs)
+    pos_count = 0
+
+    print("Attributes:", attrs)
+    print("Starting hypothesis:", h)
+    print()
+
+    for row in data:
+        if not row or len(row) < len(attrs) + 1:
+            continue
+        row = [c.strip() for c in row]
+        label = row[-1]
+        if is_positive(label):
+            pos_count += 1
+            for i, val in enumerate(row[:-1]):
+                if h[i] == MSPEC:
+                    h[i] = val
+                elif h[i] != val:
+                    h[i] = ANY
+
+            print(f"After positive example #{pos_count}:")
+            print({attrs[i]: h[i] for i in range(len(attrs))})
+            print()
+
+    print("Final hypothesis:")
+    print({attrs[i]: h[i] for i in range(len(attrs))})
+    return h
+
+
+if __name__ == "__main__":
+    # Use CSV in the script directory if present, else fall back to one in the repo root
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    csv_path = os.path.join(base_dir, "workload_data.csv")
+    ensure_sample_file(csv_path)
+    print(f"Using dataset: {csv_path}\n")
+    find_s(csv_path)
