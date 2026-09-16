@@ -1,0 +1,132 @@
+import math
+import pandas as pd
+
+# Training Dataset
+data = {
+    'Outlook': [
+        'Sunny', 'Sunny', 'Overcast', 'Rain', 'Rain', 'Rain',
+        'Overcast', 'Sunny', 'Sunny', 'Rain', 'Sunny',
+        'Overcast', 'Overcast', 'Rain'
+    ],
+    'Temperature': [
+        'Hot', 'Hot', 'Hot', 'Mild', 'Cool', 'Cool',
+        'Cool', 'Mild', 'Cool', 'Mild', 'Mild',
+        'Mild', 'Hot', 'Mild'
+    ],
+    'Humidity': [
+        'High', 'High', 'High', 'High', 'Normal', 'Normal',
+        'Normal', 'High', 'Normal', 'Normal', 'Normal',
+        'High', 'Normal', 'High'
+    ],
+    'Wind': [
+        'Weak', 'Strong', 'Weak', 'Weak', 'Weak', 'Strong',
+        'Strong', 'Weak', 'Weak', 'Weak', 'Strong',
+        'Strong', 'Weak', 'Strong'
+    ],
+    'Play Tennis': [
+        'No', 'No', 'Yes', 'Yes', 'Yes', 'No',
+        'Yes', 'No', 'Yes', 'Yes', 'Yes',
+        'Yes', 'Yes', 'No'
+    ]
+}
+
+df = pd.DataFrame(data)
+
+
+# Calculate Entropy
+def entropy(target):
+    values = target.value_counts()
+    total = len(target)
+
+    ent = 0
+
+    for count in values:
+        probability = count / total
+        ent -= probability * math.log2(probability)
+
+    return ent
+
+
+# Calculate Information Gain
+def information_gain(data, attribute, target='Play Tennis'):
+
+    total_entropy = entropy(data[target])
+
+    values = data[attribute].unique()
+
+    weighted_entropy = 0
+
+    for value in values:
+        subset = data[data[attribute] == value]
+
+        weighted_entropy += (
+            len(subset) / len(data)
+        ) * entropy(subset[target])
+
+    return total_entropy - weighted_entropy
+
+
+# ID3 Algorithm
+def id3(data, attributes, target='Play Tennis'):
+
+    # If all examples belong to one class
+    if len(data[target].unique()) == 1:
+        return data[target].iloc[0]
+
+    # If no attributes remain
+    if len(attributes) == 0:
+        return data[target].mode()[0]
+
+    # Find attribute with highest Information Gain
+    gains = {}
+
+    for attribute in attributes:
+        gains[attribute] = information_gain(data, attribute, target)
+
+    best_attribute = max(gains, key=gains.get)
+
+    tree = {best_attribute: {}}
+
+    remaining_attributes = [
+        attr for attr in attributes if attr != best_attribute
+    ]
+
+    # Create branches
+    for value in data[best_attribute].unique():
+
+        subset = data[data[best_attribute] == value]
+
+        if len(subset) == 0:
+            tree[best_attribute][value] = data[target].mode()[0]
+
+        else:
+            tree[best_attribute][value] = id3(
+                subset,
+                remaining_attributes,
+                target
+            )
+
+    return tree
+
+
+# Attributes
+attributes = ['Outlook', 'Temperature', 'Humidity', 'Wind']
+
+
+# Display Entropy
+print("Entropy of entire dataset:")
+print(round(entropy(df['Play Tennis']), 3))
+
+
+# Display Information Gain
+print("\nInformation Gain:")
+for attribute in attributes:
+    gain = information_gain(df, attribute)
+    print(attribute, "=", round(gain, 3))
+
+
+# Build Decision Tree
+tree = id3(df, attributes)
+
+print("\nDecision Tree:")
+print(tree)
